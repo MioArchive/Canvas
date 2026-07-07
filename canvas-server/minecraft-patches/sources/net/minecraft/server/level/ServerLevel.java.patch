@@ -132,30 +132,22 @@
              BlockPos pos = this.findLightningTargetAround(this.getBlockRandomPos(minX, 0, minZ, 15));
              if (this.isRainingAt(pos)) {
                  DifficultyInstance difficulty = this.getCurrentDifficultyAt(pos);
-@@ -1142,6 +_,17 @@
+@@ -1142,6 +_,7 @@
      public void tickPrecipitation(final BlockPos pos) {
          BlockPos topPos = this.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, pos);
          BlockPos belowPos = topPos.below();
-+        // Canvas start - optimize precipitation
-+        BlockState heighestBlockState = this.getBlockState(belowPos);
-+        if (
-+            !(
-+                (heighestBlockState.tagFlag & io.canvasmc.canvas.world.block.BlockTags.WATER) != 0 ||
-+                (heighestBlockState.tagFlag & io.canvasmc.canvas.world.block.BlockTags.INTERACTS_WITH_PRECIPITATION) != 0
-+            ) || !this.isRaining()
-+        ) {
-+            return;
-+        }
-+        // Canvas end - optimize precipitation
++        BlockState heighestBlockState = this.getBlockState(belowPos); // Canvas - optimize precipitation
          Biome biome = this.getBiome(topPos).value();
          if (biome.shouldFreeze(this, belowPos)) {
              org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockFormEvent(this, belowPos, Blocks.ICE.defaultBlockState(), Block.UPDATE_ALL, null); // CraftBukkit
-@@ -1165,8 +_,7 @@
+@@ -1164,9 +_,8 @@
+             }
  
              Biome.Precipitation precipitation = biome.getPrecipitationAt(belowPos, this.getSeaLevel());
-             if (precipitation != Biome.Precipitation.NONE) {
+-            if (precipitation != Biome.Precipitation.NONE) {
 -                BlockState belowState = this.getBlockState(belowPos);
 -                belowState.getBlock().handlePrecipitation(belowState, this, belowPos, precipitation);
++            if (precipitation != Biome.Precipitation.NONE && (heighestBlockState.tagFlag & io.canvasmc.canvas.world.block.BlockTags.INTERACTS_WITH_PRECIPITATION) != 0) { // Canvas - optimize precipitation
 +                heighestBlockState.getBlock().handlePrecipitation(heighestBlockState, this, belowPos, precipitation); // Canvas - optimize precipitation
              }
          }
